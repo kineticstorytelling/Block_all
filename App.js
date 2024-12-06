@@ -6,6 +6,8 @@ import {
   ScrollView,
   StatusBar,
   Alert,
+  NativeEventEmitter,
+  NativeModules,
 } from 'react-native';
 import {
   Provider as PaperProvider,
@@ -25,24 +27,49 @@ const App = () => {
   const [isBlocking, setIsBlocking] = useState(false);
   const [timeLimit, setTimeLimit] = useState('');
   const [hasPermissions, setHasPermissions] = useState(false);
+  const [hasDeviceAdmin, setHasDeviceAdmin] = useState(false);
 
   useEffect(() => {
     checkAndRequestPermissions();
+    const eventEmitter = new NativeEventEmitter(NativeModules.AppBlocker);
+    const subscription = eventEmitter.addListener(
+      'appBlocked',
+      (blockedApp) => {
+        console.log('Blocked app:', blockedApp);
+      }
+    );
+
+    return () => {
+      subscription.remove();
+    };
   }, []);
 
   const checkAndRequestPermissions = async () => {
     const hasPerms = await AppBlocker.checkPermissions();
-    if (!hasPerms) {
+    const isAdmin = await AppBlocker.checkDeviceAdminPermission();
+    
+    setHasPermissions(hasPerms);
+    setHasDeviceAdmin(isAdmin);
+
+    if (!hasPerms || !isAdmin) {
       Alert.alert(
         'Permissions Required',
-        'This app needs usage access permission to function properly.',
+        'This app needs usage access and device admin permissions to function properly.',
         [
           {
-            text: 'Grant Permission',
+            text: 'Grant Permissions',
             onPress: async () => {
-              await AppBlocker.requestPermissions();
+              if (!hasPerms) {
+                await AppBlocker.requestPermissions();
+              }
+              if (!isAdmin) {
+                await AppBlocker.requestDeviceAdminPermission();
+              }
+              // Check permissions again after user action
               const newPerms = await AppBlocker.checkPermissions();
+              const newAdmin = await AppBlocker.checkDeviceAdminPermission();
               setHasPermissions(newPerms);
+              setHasDeviceAdmin(newAdmin);
             },
           },
           {
@@ -51,14 +78,12 @@ const App = () => {
           },
         ]
       );
-    } else {
-      setHasPermissions(true);
     }
   };
 
   const toggleBlocking = async () => {
-    if (!hasPermissions) {
-      Alert.alert('Permission Required', 'Please grant usage access permission first.');
+    if (!hasPermissions || !hasDeviceAdmin) {
+      Alert.alert('Permissions Required', 'Please grant all required permissions first.');
       return;
     }
 
