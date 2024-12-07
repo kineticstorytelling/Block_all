@@ -10,9 +10,23 @@ class AppBlockerService {
     return false;
   }
 
+  async checkDeviceAdminPermission() {
+    if (Platform.OS === 'android') {
+      return await AppBlocker.checkDeviceAdminPermission();
+    }
+    return false;
+  }
+
   async requestPermissions() {
     if (Platform.OS === 'android') {
       return await AppBlocker.requestPermissions();
+    }
+    return false;
+  }
+
+  async requestDeviceAdminPermission() {
+    if (Platform.OS === 'android') {
+      return await AppBlocker.requestDeviceAdminPermission();
     }
     return false;
   }

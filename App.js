@@ -18,7 +18,6 @@ import {
   Card,
   Title,
   Paragraph,
-  useTheme,
 } from 'react-native-paper';
 import AppBlocker from './src/services/AppBlocker';
 
@@ -120,12 +119,12 @@ const App = () => {
           <Card style={styles.card}>
             <Card.Content>
               <TextInput
-                label="Allowed App/Website"
+                label="Allowed App Package Name"
                 value={allowedApp}
                 onChangeText={setAllowedApp}
                 style={styles.input}
                 mode="outlined"
-                placeholder="Enter app or website name"
+                placeholder="e.g., com.android.chrome"
               />
 
               <TextInput
@@ -138,12 +137,17 @@ const App = () => {
                 placeholder="Optional: Set a time limit"
               />
 
+              <View style={styles.permissionStatus}>
+                <Text>Usage Stats Permission: {hasPermissions ? '✅' : '❌'}</Text>
+                <Text>Device Admin Permission: {hasDeviceAdmin ? '✅' : '❌'}</Text>
+              </View>
+
               <View style={styles.switchContainer}>
                 <Text>Enable Blocking</Text>
                 <Switch
                   value={isBlocking}
                   onValueChange={toggleBlocking}
-                  color="#6200ee"
+                  disabled={!hasPermissions || !hasDeviceAdmin}
                 />
               </View>
             </Card.Content>
@@ -152,10 +156,10 @@ const App = () => {
           <View style={styles.buttonContainer}>
             <Button
               mode="contained"
-              onPress={toggleBlocking}
+              onPress={checkAndRequestPermissions}
               style={styles.button}
             >
-              {isBlocking ? 'Stop Blocking' : 'Start Blocking'}
+              Check Permissions
             </Button>
           </View>
 
@@ -219,6 +223,12 @@ const styles = StyleSheet.create({
   },
   button: {
     padding: 8,
+  },
+  permissionStatus: {
+    marginVertical: 10,
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 5,
   },
 });
 
