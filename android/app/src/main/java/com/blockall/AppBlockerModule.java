@@ -85,31 +85,6 @@ public class AppBlockerModule extends ReactContextBaseJavaModule {
     }
 
     @ReactMethod
-    public void getCurrentApp(Promise promise) {
-        UsageStatsManager usageStatsManager = (UsageStatsManager) reactContext.getSystemService(Context.USAGE_STATS_SERVICE);
-        long time = System.currentTimeMillis();
-        List<UsageStats> stats = usageStatsManager.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, 
-                                                                  time - 1000*1000, time);
-        
-        if (stats != null) {
-            SortedMap<Long, UsageStats> sortedMap = new TreeMap<>();
-            for (UsageStats usageStats : stats) {
-                sortedMap.put(usageStats.getLastTimeUsed(), usageStats);
-            }
-            
-            if (!sortedMap.isEmpty()) {
-                String currentApp = sortedMap.get(sortedMap.lastKey()).getPackageName();
-                promise.resolve(currentApp);
-                return;
-            }
-        }
-        
-        ActivityManager activityManager = (ActivityManager) reactContext.getSystemService(Context.ACTIVITY_SERVICE);
-        String currentApp = activityManager.getRunningAppProcesses().get(0).processName;
-        promise.resolve(currentApp);
-    }
-
-    @ReactMethod
     public void blockApp(String packageName, Promise promise) {
         if (!devicePolicyManager.isAdminActive(deviceAdminComponent)) {
             promise.reject("PERMISSION_DENIED", "Device admin permission not granted");
